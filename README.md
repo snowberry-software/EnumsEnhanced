@@ -16,6 +16,8 @@ Following extension methods will be generated for each enum:
 
 # How to use it
 
+The project that makes use of this package must enable ``AllowUnsafeBlocks`` in order to allow compiling the ``HasFlagUnsafe`` extension method.
+
 The generated class will always have the same naming scheme by using your enum type name with an `Enhanced` postfix (e.g. **YourEnumName**`Enhanced`)
 or in this example **TestEnumEnhanced**.
 
