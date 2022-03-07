@@ -18,6 +18,7 @@
 		<PackageTags>source generator, enums, fast, reflection</PackageTags>
 		<Platforms>AnyCPU;x64</Platforms>
 
+		<VersionPrefix>1.0.1</VersionPrefix>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<Copyright>Copyright © 2022 Snowberry Software</Copyright>
