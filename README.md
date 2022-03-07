@@ -1,3 +1,6 @@
+![GitHub last commit (master)](https://img.shields.io/github/last-commit/snowberry-software/EnumsEnhanced/master.svg?logo=github)
+[![NuGet Version](https://img.shields.io/nuget/v/EnumsEnhanced.svg?logo=nuget)](https://www.nuget.org/packages/EnumsEnhanced/)
+
 # EnumsEnhanced
 
 `EnumsEnhanced` is a C# [source generator](https://devblogs.microsoft.com/dotnet/introducing-c-source-generators) for generating common (extension) methods for enums without having the cost of the Reflection API (slow and many allocations).
