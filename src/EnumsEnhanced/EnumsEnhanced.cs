@@ -42,10 +42,13 @@ internal class EnumsEnhanced : ISourceGenerator
                 if (semanticModel == null)
                     continue;
 
-                var symbol = semanticModel.GetDeclaredSymbol(eds);
+                var symbol = semanticModel.GetDeclaredSymbol(eds) as INamedTypeSymbol;
 
                 if (symbol == null)
                     return;
+
+                if (symbol.ContainingType != null)
+                    continue;
 
                 var membersSymbols = new ISymbol[eds.Members.Count];
 
@@ -54,7 +57,7 @@ internal class EnumsEnhanced : ISourceGenerator
 
                 var sb = new StringBuilder();
 
-                GenerateEnumMethods(context, eds, (INamedTypeSymbol)symbol, membersSymbols, sb);
+                GenerateEnumMethods(context, eds, symbol, membersSymbols, sb);
 
                 string classCode = GetClassTemplate(eds, symbol, out string? className)
                     .Replace("{CLASS_BODY}", sb.ToString());

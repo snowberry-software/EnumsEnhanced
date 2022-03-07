@@ -18,3 +18,11 @@ public enum TestEnum2 : short
     Test1 = -2,
     Test2 = +1,
 }
+
+internal class EnumContainingTypeTest
+{
+    public enum ContainingTypeEnum
+    {
+        Test1
+    }
+}

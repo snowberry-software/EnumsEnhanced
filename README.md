@@ -18,6 +18,19 @@ Following extension methods will be generated for each enum:
 
 The project that makes use of this package must enable ``AllowUnsafeBlocks`` in order to allow compiling the ``HasFlagUnsafe`` extension method.
 
+Also it will only generate the extension methods if the enum has no containing type.
+
+```cs
+internal class EnumContainingTypeTest
+{
+    // Will not generate any code for this enum.
+    public enum ContainingTypeEnum
+    {
+        Test1
+    }
+}
+```
+
 The generated class will always have the same naming scheme by using your enum type name with an `Enhanced` postfix (e.g. **YourEnumName**`Enhanced`)
 or in this example **TestEnumEnhanced**.
 
