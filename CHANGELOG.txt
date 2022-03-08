@@ -1,0 +1,8 @@
+v.1.0.2
+- Added generation for the TryParse method as TryParseFast.
+
+v.1.0.1
+- Stop generating code for enums with containing type.
+
+v.1.0.0
+- Initial release.

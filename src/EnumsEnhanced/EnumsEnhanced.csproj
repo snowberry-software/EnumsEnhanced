@@ -26,6 +26,8 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/snowberry-software/EnumsEnhanced</RepositoryUrl>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+
+		<PackageReleaseNotes>(Please write the package release notes in "CHANGELOG.txt".)</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -44,5 +46,15 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0" />
 	</ItemGroup>
+
+	<Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+		<ReadLinesFromFile File="..\..\CHANGELOG.txt">
+			<Output TaskParameter="Lines" ItemName="ReleaseNoteLines"/>
+		</ReadLinesFromFile>
+
+		<PropertyGroup>
+			<PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+		</PropertyGroup>
+	</Target>
 
 </Project>

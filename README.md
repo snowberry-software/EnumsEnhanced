@@ -15,11 +15,12 @@ Following extension methods will be generated for each enum:
 | HasFlag   | HasFlagFast, HasFlagUnsafe |
 | IsDefined | IsDefinedFast              |
 | Parse     | ParseFast                  |
+| TryParse  | TryParseFast               |
 | ToString  | ToStringFast               |
 
 # How to use it
 
-The project that makes use of this package must enable ``AllowUnsafeBlocks`` in order to allow compiling the ``HasFlagUnsafe`` extension method.
+The project that makes use of this package must enable `AllowUnsafeBlocks` in order to allow compiling the `HasFlagUnsafe` extension method.
 
 Also it will only generate the extension methods if the enum has no containing type.
 
