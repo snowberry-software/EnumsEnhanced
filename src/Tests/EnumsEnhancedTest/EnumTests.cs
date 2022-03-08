@@ -5,18 +5,6 @@ namespace EnumsEnhancedTest;
 public class EnumTests
 {
     [Fact]
-    public void HasFlagFast()
-    {
-        var e = TestEnum.Test1 | TestEnum.Test4;
-        Assert.True(e.HasFlagFast(TestEnum.Test1));
-        Assert.True(e.HasFlagFast(TestEnum.Test_1));
-        Assert.True(e.HasFlagFastUnsafe(TestEnum.Test4));
-
-        Assert.False(e.HasFlagFast(TestEnum.Test5));
-        Assert.False(e.HasFlagFast(TestEnum.Test6));
-    }
-
-    [Fact]
     public void GetName()
     {
         var e = TestEnum.Test1;
@@ -31,16 +19,6 @@ public class EnumTests
         Assert.NotEqual(nameof(TestEnum.Test7), e.GetNameFast(false));
 
         Assert.Equal($"{nameof(TestEnum.Test1)}, {nameof(TestEnum.Test4)}", e.ToStringFast());
-    }
-
-    [Fact]
-    public void GetNameWithFlags()
-    {
-        var e = TestEnum.Test1 | TestEnum.Test5;
-        Assert.Null(e.GetNameFast(false));
-        Assert.Null(e.GetNameFast(false));
-
-        Assert.Equal($"{nameof(TestEnum.Test1)}, {nameof(TestEnum.Test5)}", e.GetNameFast(true));
     }
 
     [Fact]
@@ -61,6 +39,16 @@ public class EnumTests
     }
 
     [Fact]
+    public void GetNameWithFlags()
+    {
+        var e = TestEnum.Test1 | TestEnum.Test5;
+        Assert.Null(e.GetNameFast(false));
+        Assert.Null(e.GetNameFast(false));
+
+        Assert.Equal($"{nameof(TestEnum.Test1)}, {nameof(TestEnum.Test5)}", e.GetNameFast(true));
+    }
+
+    [Fact]
     public void GetValuesTest()
     {
         var values = TestEnumEnhanced.GetValuesFast();
@@ -75,6 +63,18 @@ public class EnumTests
             var value = valuesExpected[i];
             Assert.Contains(value, values);
         }
+    }
+
+    [Fact]
+    public void HasFlagFast()
+    {
+        var e = TestEnum.Test1 | TestEnum.Test4;
+        Assert.True(e.HasFlagFast(TestEnum.Test1));
+        Assert.True(e.HasFlagFast(TestEnum.Test_1));
+        Assert.True(e.HasFlagFastUnsafe(TestEnum.Test4));
+
+        Assert.False(e.HasFlagFast(TestEnum.Test5));
+        Assert.False(e.HasFlagFast(TestEnum.Test6));
     }
 
     /// <summary>
@@ -103,20 +103,6 @@ public class EnumTests
     }
 
     [Fact]
-    public void ParseNameTest()
-    {
-        string enumName = nameof(TestEnum.Test4);
-
-        Assert.Equal(TestEnum.Test4, Enum.Parse(typeof(TestEnum), enumName));
-
-        foreach (var value in TestEnumEnhanced.GetValuesFast())
-            Assert.Equal(value, TestEnumEnhanced.ParseFast(value.GetNameFast()));
-
-        foreach (var value in TestEnumEnhanced.GetValuesFast())
-            Assert.Equal(value, TestEnumEnhanced.ParseFast(value.GetNameFast()!.ToUpper(), true));
-    }
-
-    [Fact]
     public void ParseMultipleNamesTest()
     {
         string enumName = $"{nameof(TestEnum.Test4)}, {nameof(TestEnum.Test1)}";
@@ -138,6 +124,39 @@ public class EnumTests
         {
             TestEnumEnhanced.ParseFast($"Test");
         });
+
+        Assert.Throws<ArgumentException>(() =>
+        {
+            TestEnum2Enhanced.ParseFast($"-2x");
+        });
+    }
+
+    [Fact]
+    public void ParseNameTest()
+    {
+        string enumName = nameof(TestEnum.Test4);
+
+        Assert.Equal(TestEnum.Test4, Enum.Parse(typeof(TestEnum), enumName));
+
+        foreach (var value in TestEnumEnhanced.GetValuesFast())
+        {
+            Assert.Equal(value, TestEnumEnhanced.ParseFast(value.GetNameFast()!, true));
+            Assert.True(TestEnumEnhanced.TryParseFast(value.GetNameFast()!, true, out var outVal));
+            Assert.Equal(value, outVal);
+
+            Assert.False(TestEnumEnhanced.TryParseFast(value.GetNameFast()! + "xxxx", true, out outVal));
+        }
+
+        // Uppercase
+
+        foreach (var value in TestEnumEnhanced.GetValuesFast())
+        {
+            Assert.Equal(value, TestEnumEnhanced.ParseFast(value.GetNameFast()!.ToUpper(), true));
+            Assert.True(TestEnumEnhanced.TryParseFast(value.GetNameFast()!.ToUpper(), true, out var outVal));
+            Assert.Equal(value, outVal);
+
+            Assert.False(TestEnumEnhanced.TryParseFast(value.GetNameFast()!.ToUpper() + "xxxx", true, out outVal));
+        }
     }
 
     [Fact]
@@ -148,10 +167,15 @@ public class EnumTests
         Assert.Equal(TestEnum.Test4, Enum.Parse(typeof(TestEnum), enumName));
 
         foreach (var value in TestEnumEnhanced.GetValuesFast())
+        {
             Assert.Equal(value, Enum.Parse(typeof(TestEnum), ((int)value).ToString()));
-
-        foreach (var value in TestEnumEnhanced.GetValuesFast())
             Assert.Equal(value, TestEnumEnhanced.ParseFast(((int)value).ToString()));
+
+            Assert.True(TestEnumEnhanced.TryParseFast(((int)value).ToString(), false, out var outVal));
+            Assert.Equal(value, outVal);
+
+            Assert.False(TestEnumEnhanced.TryParseFast(((int)value).ToString() + "x", false, out outVal));
+        }
 
         Assert.Throws<ArgumentException>(() =>
         {

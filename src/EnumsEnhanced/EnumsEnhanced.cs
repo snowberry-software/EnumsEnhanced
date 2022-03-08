@@ -17,95 +17,6 @@ internal class EnumsEnhanced : ISourceGenerator
             DiagnosticSeverity.Error,
             true);
 
-    /// <inheritdoc/>
-    public void Initialize(GeneratorInitializationContext context)
-    {
-        context.RegisterForSyntaxNotifications(() => new ServiceNotifications());
-    }
-
-    /// <inheritdoc/>
-    public void Execute(GeneratorExecutionContext context)
-    {
-        var receiver = context.SyntaxReceiver as ServiceNotifications;
-
-        if (receiver == null || receiver.DeclaredEnums.Count == 0)
-            return;
-
-        for (int i = 0; i < receiver.DeclaredEnums.Count; i++)
-        {
-            var eds = receiver.DeclaredEnums[i];
-
-            try
-            {
-                var semanticModel = context.Compilation.GetSemanticModel(eds.SyntaxTree);
-
-                if (semanticModel == null)
-                    continue;
-
-                var symbol = semanticModel.GetDeclaredSymbol(eds) as INamedTypeSymbol;
-
-                if (symbol == null)
-                    return;
-
-                if (symbol.ContainingType != null)
-                    continue;
-
-                var membersSymbols = new ISymbol[eds.Members.Count];
-
-                for (int j = 0; j < eds.Members.Count; j++)
-                    membersSymbols[j] = semanticModel.GetDeclaredSymbol(eds.Members[j])!;
-
-                var sb = new StringBuilder();
-
-                GenerateEnumMethods(context, eds, symbol, membersSymbols, sb);
-
-                string classCode = GetClassTemplate(eds, symbol, out string? className)
-                    .Replace("{CLASS_BODY}", sb.ToString());
-
-                context.AddSource($"{className}.g.cs", classCode.Trim());
-            }
-            catch
-            {
-            }
-        }
-    }
-
-    private string GetClassTemplate(EnumDeclarationSyntax eds, ISymbol enumSymbol, out string className)
-    {
-        className = $"{enumSymbol.Name}Enhanced";
-
-        return @$"
-
-            using {typeof(StringBuilder).Namespace};
-            using {typeof(MethodImplAttribute).Namespace};
-            using {typeof(Unsafe).Namespace};
-            using {typeof(IEnumerable<>).Namespace};
-            using {typeof(ArgumentNullException).Namespace};
-            using {typeof(StringComparison).Namespace};
-            using {typeof(NumberStyles).Namespace};
-
-            namespace {enumSymbol.ContainingNamespace.ToDisplayString()}
-            {{
-                /// <summary>
-                /// Reflection free extension methods for the <see cref=""{enumSymbol.Name}""/> type.
-                /// </summary>
-                {AccessibilityToAccessModifier(enumSymbol.DeclaredAccessibility)} static partial class {className}
-                {{
-                    {{CLASS_BODY}}
-                }}
-            }}
-        ";
-
-        static string AccessibilityToAccessModifier(Accessibility accessibility)
-        {
-            return accessibility switch
-            {
-                Accessibility.Internal or Accessibility.Private => "internal",
-                _ => "public"
-            };
-        }
-    }
-
     private void GenerateEnumMethods(GeneratorExecutionContext context, EnumDeclarationSyntax enumDeclarationSyntax, INamedTypeSymbol enumSymbol, ISymbol[] memberSymbols, StringBuilder methodSb)
     {
         var methodImplAttributeText = new StringBuilder();
@@ -190,7 +101,6 @@ internal class EnumsEnhanced : ISourceGenerator
                     case SpecialType.System_UInt64:
                     case SpecialType.System_Double:
                         return "(*(long*)e & *(long*)flag) == *(long*)flag";
-
                 }
                 return "";
             }
@@ -321,7 +231,6 @@ internal class EnumsEnhanced : ISourceGenerator
                 {
                     if (constantValuesChecked.Contains(member.ConstantValue))
                     {
-
                         string skipText = $"// Skipping duplicated constant value: {memberRef} -> {member.ConstantValue}";
                         switchCases.AppendLine(skipText);
                         switchCases.AppendLine();
@@ -350,7 +259,7 @@ internal class EnumsEnhanced : ISourceGenerator
                 /// </summary>
                 /// <param name=""e"">The value of a particular enumerated constant in terms of its underlying type.</param>
                 /// <param name=""includeFlagNames"">Determines whether the value has flags, so it will return `EnumValue, EnumValue2`.</param>
-                /// <returns> A string containing the name of the enumerated constant or null if the enum has multiple flags set but <paramref name=""includeFlagNames""/> is not enabled.</returns>
+                /// <returns> A string containing the name of the enumerated constant or <see langword=""null""/> if the enum has multiple flags set but <paramref name=""includeFlagNames""/> is not enabled.</returns>
                 public static string? {getNameMethodName}(this {enumSymbol.Name} e, bool includeFlagNames = false)
                 {{
                     switch(e)
@@ -362,13 +271,13 @@ internal class EnumsEnhanced : ISourceGenerator
                     if(!includeFlagNames)
                         return null;
                         //throw new Exception(""Enum name could not be found!"");
-            
+
                     var flagBuilder = new StringBuilder();
                     {flagCases}
 
                     return flagBuilder.ToString().Trim(new char[] {{ ',', ' ' }});
                 }}
-    
+
                 /// <summary>
                 /// Converts the value of this instance to its equivalent string representation.
                 /// </summary>
@@ -384,7 +293,8 @@ internal class EnumsEnhanced : ISourceGenerator
 
         // ParseFast
         {
-            const string parseFastMethodName = "ParseFast";
+            const string parseMethodName = "ParseFast";
+            const string tryParseMethodName = "TryParseFast";
             switchCases.Clear();
 
             var ifCases = new StringBuilder();
@@ -417,6 +327,7 @@ internal class EnumsEnhanced : ISourceGenerator
                 }
 
                 valueSwitchCases.AppendLine($"case ({enumUnderlyingType.Name}){memberRef}:");
+                valueSwitchCases.AppendLine($"\tsuccessful = true;");
                 valueSwitchCases.AppendLine($"\treturn {memberRef};");
                 valueSwitchCases.AppendLine();
 
@@ -430,30 +341,61 @@ internal class EnumsEnhanced : ISourceGenerator
                 /// </summary>
                 /// <param name=""value"">A string containing the name or value to convert.</param>
                 /// <param name=""ignoreCase""><see langword=""true""/> to ignore case; false to regard case.</param>
-                /// <returns>The enumeration value whose value is represented by the given value.</returns>
-                public static {enumSymbol.Name} {parseFastMethodName}(string value, bool ignoreCase = false)
+                /// <param name=""result"">The result of the enumeration constant.</param>
+                /// <returns><see langword=""true""/> if the conversion succeeded; <see langword=""false""/> otherwise.</returns>
+                public static bool {tryParseMethodName}(string value, bool ignoreCase, out {enumSymbol.Name} result)
                 {{
-                    if(string.{nameof(string.IsNullOrEmpty)}(value) || string.{nameof(string.IsNullOrWhiteSpace)}(value))
+                    result = {parseMethodName}(out var successful, value: value, ignoreCase: ignoreCase, throwOnFailure: false);
+                    return successful;
+                }}
+
+                /// <summary>
+                /// Converts the string representation of the name or numeric value of one or more enumerated constants to an equivalent enumerated object.
+                /// </summary>
+                /// <param name=""value"">A string containing the name or value to convert.</param>
+                /// <param name=""ignoreCase""><see langword=""true""/> to ignore case; false to regard case.</param>
+                /// <returns>The enumeration value whose value is represented by the given value.</returns>
+                public static {enumSymbol.Name} {parseMethodName}(string value, bool ignoreCase = false)
+                {{
+                    return {parseMethodName}(out _, value: value, ignoreCase: ignoreCase, throwOnFailure: true);
+                }}
+
+                /// <summary>
+                /// Converts the string representation of the name or numeric value of one or more enumerated constants to an equivalent enumerated object.
+                /// </summary>
+                /// <param name=""successful""><see langword=""true""/> if the conversion succeeded; <see langword=""false""/> otherwise.</param>
+                /// <param name=""value"">A string containing the name or value to convert.</param>
+                /// <param name=""ignoreCase""><see langword=""true""/> to ignore case; false to regard case.</param>
+                /// <param name=""throwOnError"">Determines whether to throw an <see cref=""Exception""/> on errors or not.</param>
+                /// <returns>The enumeration value whose value is represented by the given value.</returns>
+                public static {enumSymbol.Name} {parseMethodName}(out bool successful, string value, bool ignoreCase = false, bool throwOnFailure = true)
+                {{
+                    successful = false;
+
+                    if(throwOnFailure && (string.{nameof(string.IsNullOrEmpty)}(value) || string.{nameof(string.IsNullOrWhiteSpace)}(value)))
+                    {{
                         throw new {nameof(ArgumentException)}(""Value can't be null or whitespace!"", nameof(value));
+                    }}
 
                     {enumUnderlyingType.Name} localResult = 0;
                     bool parsed = false;
                     string subValue;
                     string originalValue = value;
                     char firstChar = value[0];
-                    
+
                     if(char.{nameof(char.IsDigit)}(firstChar) || firstChar == '-' || firstChar == '+')
                     {{
-                        switch({enumUnderlyingType.Name}.Parse(value, NumberStyles.AllowLeadingSign | NumberStyles.AllowTrailingWhite))
-                        {{
-                            {valueSwitchCases}
-                        }}
+                        if({enumUnderlyingType.Name}.TryParse(value, NumberStyles.AllowLeadingSign | NumberStyles.AllowTrailingWhite, null, out var valueNumber))
+                            switch(valueNumber)
+                            {{
+                                {valueSwitchCases}
+                            }}
                     }}
                     else
                     while(value != null && value.Length > 0)
                     {{
                         parsed = false;
-                        
+
                         int endIndex = value.IndexOf(',');
 
                         if(endIndex < 0)
@@ -485,16 +427,115 @@ internal class EnumsEnhanced : ISourceGenerator
                         {{
                             {ifCases}
                         }}
+
+                        if(!parsed)
+                            break;
                     }}
 
+                    successful = true;
+
                     if(!parsed)
-                        throw new {nameof(ArgumentException)}($""Could not convert the given value `{{originalValue}}`."", nameof(value));
-                
+                    {{
+                        successful = false;
+
+                        if(throwOnFailure)
+                            throw new {nameof(ArgumentException)}($""Could not convert the given value `{{originalValue}}`."", nameof(value));
+                    }}
+
                     return ({enumSymbol.Name})localResult;
                 }}
 
             ");
         }
+    }
+
+    private string GetClassTemplate(EnumDeclarationSyntax eds, ISymbol enumSymbol, out string className)
+    {
+        className = $"{enumSymbol.Name}Enhanced";
+
+        return @$"
+
+            using {typeof(StringBuilder).Namespace};
+            using {typeof(MethodImplAttribute).Namespace};
+            using {typeof(Unsafe).Namespace};
+            using {typeof(IEnumerable<>).Namespace};
+            using {typeof(ArgumentNullException).Namespace};
+            using {typeof(StringComparison).Namespace};
+            using {typeof(NumberStyles).Namespace};
+
+            namespace {enumSymbol.ContainingNamespace.ToDisplayString()}
+            {{
+                /// <summary>
+                /// Reflection free extension methods for the <see cref=""{enumSymbol.Name}""/> type.
+                /// </summary>
+                {AccessibilityToAccessModifier(enumSymbol.DeclaredAccessibility)} static partial class {className}
+                {{
+                    {{CLASS_BODY}}
+                }}
+            }}
+        ";
+
+        static string AccessibilityToAccessModifier(Accessibility accessibility)
+        {
+            return accessibility switch
+            {
+                Accessibility.Internal or Accessibility.Private => "internal",
+                _ => "public"
+            };
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Execute(GeneratorExecutionContext context)
+    {
+        var receiver = context.SyntaxReceiver as ServiceNotifications;
+
+        if (receiver == null || receiver.DeclaredEnums.Count == 0)
+            return;
+
+        for (int i = 0; i < receiver.DeclaredEnums.Count; i++)
+        {
+            var eds = receiver.DeclaredEnums[i];
+
+            try
+            {
+                var semanticModel = context.Compilation.GetSemanticModel(eds.SyntaxTree);
+
+                if (semanticModel == null)
+                    continue;
+
+                var symbol = semanticModel.GetDeclaredSymbol(eds) as INamedTypeSymbol;
+
+                if (symbol == null)
+                    return;
+
+                if (symbol.ContainingType != null)
+                    continue;
+
+                var membersSymbols = new ISymbol[eds.Members.Count];
+
+                for (int j = 0; j < eds.Members.Count; j++)
+                    membersSymbols[j] = semanticModel.GetDeclaredSymbol(eds.Members[j])!;
+
+                var sb = new StringBuilder();
+
+                GenerateEnumMethods(context, eds, symbol, membersSymbols, sb);
+
+                string classCode = GetClassTemplate(eds, symbol, out string? className)
+                    .Replace("{CLASS_BODY}", sb.ToString());
+
+                context.AddSource($"{className}.g.cs", classCode.Trim());
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Initialize(GeneratorInitializationContext context)
+    {
+        context.RegisterForSyntaxNotifications(() => new ServiceNotifications());
     }
 }
 

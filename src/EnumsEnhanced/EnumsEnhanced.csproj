@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<AssemblyVersion>1.0.0.1</AssemblyVersion>
+		<AssemblyVersion>1.0.0.2</AssemblyVersion>
 
 		<Authors>Snowberry Software</Authors>
 
@@ -18,7 +18,7 @@
 		<PackageTags>source generator, enums, fast, reflection</PackageTags>
 		<Platforms>AnyCPU;x64</Platforms>
 
-		<VersionPrefix>1.0.1</VersionPrefix>
+		<VersionPrefix>1.0.2</VersionPrefix>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<Copyright>Copyright © 2022 Snowberry Software</Copyright>
