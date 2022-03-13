@@ -7,16 +7,14 @@
 		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<AssemblyVersion>1.0.0.2</AssemblyVersion>
+		<Platforms>AnyCPU;x64</Platforms>
 
 		<Authors>Snowberry Software</Authors>
-
 		<Description>Source generator for generating common (extension) methods for enums without having the cost of the Reflection API.</Description>
 
 		<IsPackable>true</IsPackable>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<RepositoryType>git</RepositoryType>
 		<PackageTags>source generator, enums, fast, reflection</PackageTags>
-		<Platforms>AnyCPU;x64</Platforms>
 
 		<VersionPrefix>1.0.2</VersionPrefix>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -24,6 +22,7 @@
 		<Copyright>Copyright © 2022 Snowberry Software</Copyright>
 		<PackageProjectUrl>https://github.com/snowberry-software/EnumsEnhanced</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/snowberry-software/EnumsEnhanced</RepositoryUrl>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 
