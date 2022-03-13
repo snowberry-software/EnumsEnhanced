@@ -23,7 +23,7 @@
 		<PackageProjectUrl>https://github.com/snowberry-software/EnumsEnhanced</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
-		<RepositoryUrl>https://github.com/snowberry-software/EnumsEnhanced</RepositoryUrl>
+		<RepositoryUrl>https://github.com/snowberry-software/EnumsEnhanced.git</RepositoryUrl>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 
 		<PackageReleaseNotes>(Please write the package release notes in "CHANGELOG.txt".)</PackageReleaseNotes>
