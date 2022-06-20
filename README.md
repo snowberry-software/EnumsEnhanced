@@ -1,4 +1,4 @@
-![GitHub last commit (master)](https://img.shields.io/github/last-commit/snowberry-software/EnumsEnhanced/master.svg?logo=github)
+[![License](https://img.shields.io/github/license/snowberry-software/EnumsEnhanced)](https://github.com/snowberry-software/EnumsEnhanced/blob/master/LICENSE)
 [![NuGet Version](https://img.shields.io/nuget/v/EnumsEnhanced.svg?logo=nuget)](https://www.nuget.org/packages/EnumsEnhanced/)
 
 # EnumsEnhanced
@@ -10,7 +10,7 @@ Following extension methods will be generated for each enum:
 | Default   | Equivalent                 |
 | --------- | -------------------------- |
 | GetName   | GetNameFast                |
-| GetNames  | GetNames                   |
+| GetNames  | GetNamesFast               |
 | GetValues | GetValuesFast              |
 | HasFlag   | HasFlagFast, HasFlagUnsafe |
 | IsDefined | IsDefinedFast              |
