@@ -11,10 +11,12 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<IsPackable>false</IsPackable>
 		<Platforms>AnyCPU;x64</Platforms>
+
+		<SuppressTfmSupportBuildWarnings>enabled</SuppressTfmSupportBuildWarnings>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+		<PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
 	</ItemGroup>
 
 	<ItemGroup>
