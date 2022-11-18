@@ -102,6 +102,7 @@ internal class EnumsEnhanced : ISourceGenerator
                     case SpecialType.System_Double:
                         return "(*(long*)e & *(long*)flag) == *(long*)flag";
                 }
+
                 return "";
             }
         }
@@ -148,7 +149,7 @@ internal class EnumsEnhanced : ISourceGenerator
 
             var switchCasesValue = new StringBuilder();
 
-            foreach (IFieldSymbol member in memberSymbols.OrderBy(x => x.Name.Length))
+            foreach (IFieldSymbol member in memberSymbols.OrderBy(x => x.Name.Length).Cast<IFieldSymbol>())
             {
                 string memberRef = $"{enumSymbol.Name}.{member.Name}";
 
@@ -284,7 +285,7 @@ internal class EnumsEnhanced : ISourceGenerator
                 /// <param name=""e"">The value of a particular enumerated constant in terms of its underlying type.</param>
                 /// <returns>The string representation of the value of this instance.</returns>
                 {methodImplAttributeText}
-                public static string {toStringMethodName}(this {enumSymbol.Name} e)
+                public static string? {toStringMethodName}(this {enumSymbol.Name} e)
                 {{
                     return {getNameMethodName}(e, true);
                 }}
@@ -301,7 +302,7 @@ internal class EnumsEnhanced : ISourceGenerator
             var valueSwitchCases = new StringBuilder();
             constantValuesChecked.Clear();
 
-            foreach (IFieldSymbol member in memberSymbols.OrderBy(x => x.Name.Length))
+            foreach (IFieldSymbol member in memberSymbols.OrderBy(x => x.Name.Length).Cast<IFieldSymbol>())
             {
                 string memberRef = $"{enumSymbol.Name}.{member.Name}";
 
@@ -404,7 +405,7 @@ internal class EnumsEnhanced : ISourceGenerator
                             subValue = value.Trim();
                             value = null;
                         }}
-                        else if(endIndex != value.Length - 1)
+                        else if(endIndex != value!.Length - 1)
                         {{
                             // Found a separator before the last char.
                             subValue = value.Substring(0, endIndex).Trim();
@@ -455,8 +456,9 @@ internal class EnumsEnhanced : ISourceGenerator
 
         return @$"
 
+            #nullable enable
+
             using {typeof(StringBuilder).Namespace};
-            using {typeof(MethodImplAttribute).Namespace};
             using {typeof(Unsafe).Namespace};
             using {typeof(IEnumerable<>).Namespace};
             using {typeof(ArgumentNullException).Namespace};
@@ -473,6 +475,8 @@ internal class EnumsEnhanced : ISourceGenerator
                     {{CLASS_BODY}}
                 }}
             }}
+
+            #nullable restore
         ";
 
         static string AccessibilityToAccessModifier(Accessibility accessibility)
@@ -488,9 +492,7 @@ internal class EnumsEnhanced : ISourceGenerator
     /// <inheritdoc/>
     public void Execute(GeneratorExecutionContext context)
     {
-        var receiver = context.SyntaxReceiver as ServiceNotifications;
-
-        if (receiver == null || receiver.DeclaredEnums.Count == 0)
+        if (context.SyntaxReceiver is not ServiceNotifications receiver || receiver.DeclaredEnums.Count == 0)
             return;
 
         for (int i = 0; i < receiver.DeclaredEnums.Count; i++)
@@ -504,9 +506,7 @@ internal class EnumsEnhanced : ISourceGenerator
                 if (semanticModel == null)
                     continue;
 
-                var symbol = semanticModel.GetDeclaredSymbol(eds) as INamedTypeSymbol;
-
-                if (symbol == null)
+                if (semanticModel.GetDeclaredSymbol(eds) is not INamedTypeSymbol symbol)
                     return;
 
                 if (symbol.ContainingType != null)
