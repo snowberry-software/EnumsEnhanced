@@ -1,3 +1,11 @@
+v.1.0.4
+- Updated README.
+- Fixed using the wrong diagnostic parameter.
+- Fixed null literal warning.
+
+v.1.0.3
+- General improvements.
+
 v.1.0.2
 - Added generation for the TryParse method as TryParseFast.
 
