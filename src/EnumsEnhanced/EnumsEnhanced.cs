@@ -35,7 +35,7 @@ internal class EnumsEnhanced : ISourceGenerator
             context.ReportDiagnostic(
                 Diagnostic.Create(UnderylingEnumerationTypeNotFound,
                 enumDeclarationSyntax.Identifier.GetLocation(),
-                DiagnosticSeverity.Error));
+                enumDeclarationSyntax.Identifier.ToString()));
 
             return;
         }
