@@ -403,7 +403,7 @@ internal class EnumsEnhanced : ISourceGenerator
                         {
                             // No next separator; use the remainder as the next value.
                             subValue = value.Trim();
-                            value = null;
+                            value = null!;
                         }
                         else if(endIndex != value!.Length - 1)
                         {
