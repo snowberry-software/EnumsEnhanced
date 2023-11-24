@@ -19,7 +19,7 @@
 		<VersionPrefix>1.0.5</VersionPrefix>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
-		<Copyright>Copyright © 2022 Snowberry Software</Copyright>
+		<Copyright>Copyright © 2023 Snowberry Software</Copyright>
 		<PackageProjectUrl>https://github.com/snowberry-software/EnumsEnhanced</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
