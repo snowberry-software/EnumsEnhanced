@@ -8,7 +8,8 @@
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <AssemblyVersion>1.0.0.5</AssemblyVersion>
         <Platforms>AnyCPU;x64</Platforms>
-
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        
         <Authors>Snowberry Software</Authors>
         <Description>Source generator for generating common (extension) methods for enums without having the cost of the Reflection API.</Description>
 
