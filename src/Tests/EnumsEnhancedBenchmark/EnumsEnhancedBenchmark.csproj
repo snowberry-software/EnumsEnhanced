@@ -1,26 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net7.0;net6.0;net48</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net8.0;net48</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
 
-		<LangVersion>latest</LangVersion>
-		
-		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<IsPackable>false</IsPackable>
-		<Platforms>AnyCPU;x64</Platforms>
+        <LangVersion>latest</LangVersion>
 
-		<SuppressTfmSupportBuildWarnings>enabled</SuppressTfmSupportBuildWarnings>
-	</PropertyGroup>
+        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+        <IsPackable>false</IsPackable>
+        <Platforms>AnyCPU;x64</Platforms>
 
-	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
-	</ItemGroup>
+        <SuppressTfmSupportBuildWarnings>enabled</SuppressTfmSupportBuildWarnings>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\..\EnumsEnhanced\EnumsEnhanced.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\EnumsEnhanced\EnumsEnhanced.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
 
 </Project>

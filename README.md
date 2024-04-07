@@ -238,7 +238,7 @@ namespace EnumsEnhancedTest {
       // Returning null is the default behavior.
       if (!includeFlagNames)
         return null;
-      //throw new Exception(""Enum name could not be found!"");
+      //throw new Exception("Enum name could not be found!");
 
       var flagBuilder = new StringBuilder();
       if (e.HasFlagFast(TestEnum.Test1))
@@ -286,7 +286,7 @@ namespace EnumsEnhancedTest {
     /// Converts the string representation of the name or numeric value of one or more enumerated constants to an equivalent enumerated object.
     /// </summary>
     /// <param name="value">A string containing the name or value to convert.</param>
-    /// <param name="ignoreCase"><see langword=""true""/> to ignore case; false to regard case.</param>
+    /// <param name="ignoreCase"><see langword="true"/> to ignore case; false to regard case.</param>
     /// <param name="result">The result of the enumeration constant.</param>
     /// <returns><see langword="true"/> if the conversion succeeded; <see langword="false"/> otherwise.</returns>
     public static bool TryParseFast(string value, bool ignoreCase, out TestEnum result) {
@@ -311,7 +311,7 @@ namespace EnumsEnhancedTest {
     /// <param name="successful"><see langword="true"/> if the conversion succeeded; <see langword="false"/> otherwise.</param>
     /// <param name="value">A string containing the name or value to convert.</param>
     /// <param name="ignoreCase"><see langword="true"/> to ignore case; false to regard case.</param>
-    /// <param name="throwOnError">Determines whether to throw an <see cref="Exception"/> on errors or not.</param>
+    /// <param name="throwOnFailure">Determines whether to throw an <see cref="Exception"/> on errors or not.</param>
     /// <returns>The enumeration value whose value is represented by the given value.</returns>
     public static TestEnum ParseFast(out bool successful, string value, bool ignoreCase = false, bool throwOnFailure = true) {
       successful = false;
@@ -366,7 +366,7 @@ namespace EnumsEnhancedTest {
           if (endIndex < 0) {
             // No next separator; use the remainder as the next value.
             subValue = value.Trim();
-            value = null;
+            value = null!;
           } else if (endIndex != value!.Length - 1) {
             // Found a separator before the last char.
             subValue = value.Substring(0, endIndex).Trim();
