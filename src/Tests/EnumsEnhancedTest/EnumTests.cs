@@ -99,7 +99,7 @@ public class EnumTests
             Assert.True(TestEnumEnhanced.IsDefinedFast(value));
 
         foreach (var value in TestEnumEnhanced.GetValuesFast())
-            Assert.False(TestEnumEnhanced.IsDefinedFast(((int)value) + int.MaxValue / 2));
+            Assert.False(TestEnumEnhanced.IsDefinedFast(((int)value) + (int.MaxValue / 2)));
     }
 
     [Fact]

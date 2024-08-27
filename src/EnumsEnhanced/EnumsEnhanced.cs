@@ -548,5 +548,5 @@ internal class ServiceNotifications : ISyntaxReceiver
             DeclaredEnums.Add(eds);
     }
 
-    public List<EnumDeclarationSyntax> DeclaredEnums { get; } = new();
+    public List<EnumDeclarationSyntax> DeclaredEnums { get; } = [];
 }

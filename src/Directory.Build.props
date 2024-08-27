@@ -1,0 +1,6 @@
+<Project>
+    <PropertyGroup>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)EnumsEnhanced.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+</Project>

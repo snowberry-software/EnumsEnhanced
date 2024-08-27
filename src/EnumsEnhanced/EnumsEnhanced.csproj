@@ -6,8 +6,8 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <AssemblyVersion>1.0.0.6</AssemblyVersion>
-        <Platforms>AnyCPU;x64</Platforms>
+        <AssemblyVersion>1.0.0.7</AssemblyVersion>
+        <Platforms>AnyCPU</Platforms>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         
         <Authors>Snowberry Software</Authors>
@@ -17,7 +17,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>source generator, enums, fast, reflection</PackageTags>
 
-        <VersionPrefix>1.0.6</VersionPrefix>
+        <VersionPrefix>1.0.7</VersionPrefix>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <Copyright>Copyright © 2024 Snowberry Software</Copyright>
