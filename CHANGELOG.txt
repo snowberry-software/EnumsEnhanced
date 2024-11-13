@@ -1,3 +1,6 @@
+v.1.1.0
+- Updated to incremental source generator.
+
 v.1.0.4
 - Updated README.
 - Fixed using the wrong diagnostic parameter.
