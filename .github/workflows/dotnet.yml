@@ -9,7 +9,7 @@ on:
       - "README.md"
 
 env:
-  DOTNET_VERSION: "8.x" # The .NET SDK version to use
+  DOTNET_VERSION: "9.x" # The .NET SDK version to use
 
 jobs:
   build:
@@ -20,10 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          include-prerelease: true
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
@@ -42,10 +41,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          include-prerelease: true
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
