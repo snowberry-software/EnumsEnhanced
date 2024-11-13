@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Immutable;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -7,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace EnumsEnhanced;
 
 [Generator]
-internal class EnumsEnhanced : ISourceGenerator
+internal class EnumsEnhanced : IIncrementalGenerator
 {
     public static readonly DiagnosticDescriptor UnderylingEnumerationTypeNotFound
       = new("EE001",
@@ -17,7 +18,43 @@ internal class EnumsEnhanced : ISourceGenerator
             DiagnosticSeverity.Error,
             true);
 
-    private void GenerateEnumMethods(GeneratorExecutionContext context, EnumDeclarationSyntax enumDeclarationSyntax, INamedTypeSymbol enumSymbol, ISymbol[] memberSymbols, StringBuilder methodSb)
+    /// <inheritdoc/>
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var enumDeclarationsProvider = context.SyntaxProvider.CreateSyntaxProvider(
+            static (n, _) => n is EnumDeclarationSyntax,
+            static (n, _) => ((INamedTypeSymbol)n.SemanticModel.GetDeclaredSymbol(n.Node)!, (EnumDeclarationSyntax)n.Node)
+        );
+
+        context.RegisterSourceOutput(enumDeclarationsProvider.Collect(), static (sourceProductionContext, enumDeclarations) =>
+        {
+            foreach (var pair in enumDeclarations)
+            {
+                var symbol = pair.Item1;
+                var eds = pair.Item2;
+
+                if (symbol.ContainingType != null)
+                    continue;
+
+                var membersSymbols = symbol
+                    .GetMembers()
+                    .Where(x => x is IFieldSymbol)
+                    .Cast<IFieldSymbol>()
+                    .ToImmutableArray();
+
+                var sb = new StringBuilder();
+
+                GenerateEnumMethods(sourceProductionContext, eds, symbol, membersSymbols, sb);
+
+                string classCode = GetClassTemplate(eds, symbol, out string? className)
+                    .Replace("{CLASS_BODY}", sb.ToString());
+
+                sourceProductionContext.AddSource($"{className}.g.cs", classCode.Trim());
+            }
+        });
+    }
+
+    private static void GenerateEnumMethods(SourceProductionContext sourceProductionContext, EnumDeclarationSyntax enumDeclarationSyntax, INamedTypeSymbol enumSymbol, IList<IFieldSymbol> memberSymbols, StringBuilder methodSb)
     {
         var methodImplAttributeText = new StringBuilder();
         methodImplAttributeText.AppendLine("#if NETCOREAPP3_0_OR_GREATER");
@@ -32,7 +69,7 @@ internal class EnumsEnhanced : ISourceGenerator
 
         if (enumUnderlyingType == null)
         {
-            context.ReportDiagnostic(
+            sourceProductionContext.ReportDiagnostic(
                 Diagnostic.Create(UnderylingEnumerationTypeNotFound,
                 enumDeclarationSyntax.Identifier.GetLocation(),
                 enumDeclarationSyntax.Identifier.ToString()));
@@ -149,7 +186,7 @@ internal class EnumsEnhanced : ISourceGenerator
 
             var switchCasesValue = new StringBuilder();
 
-            foreach (var member in memberSymbols.OrderBy(x => x.Name.Length).Cast<IFieldSymbol>())
+            foreach (var member in memberSymbols.OrderBy(x => x.Name.Length))
             {
                 string memberRef = $"{enumSymbol.Name}.{member.Name}";
 
@@ -223,9 +260,9 @@ internal class EnumsEnhanced : ISourceGenerator
 
             const string separator = $", ";
 
-            for (int i = 0; i < memberSymbols.Length; i++)
+            for (int i = 0; i < memberSymbols.Count; i++)
             {
-                var member = (IFieldSymbol)memberSymbols[i];
+                var member = memberSymbols[i];
                 string memberRef = $"{enumSymbol.Name}.{member.Name}";
 
                 if (member.HasConstantValue)
@@ -450,7 +487,7 @@ internal class EnumsEnhanced : ISourceGenerator
         }
     }
 
-    private string GetClassTemplate(EnumDeclarationSyntax eds, ISymbol enumSymbol, out string className)
+    private static string GetClassTemplate(EnumDeclarationSyntax eds, ISymbol enumSymbol, out string className)
     {
         className = $"{enumSymbol.Name}Enhanced";
 
@@ -487,55 +524,6 @@ internal class EnumsEnhanced : ISourceGenerator
                 _ => "public"
             };
         }
-    }
-
-    /// <inheritdoc/>
-    public void Execute(GeneratorExecutionContext context)
-    {
-        if (context.SyntaxReceiver is not ServiceNotifications receiver || receiver.DeclaredEnums.Count == 0)
-            return;
-
-        for (int i = 0; i < receiver.DeclaredEnums.Count; i++)
-        {
-            var eds = receiver.DeclaredEnums[i];
-
-            try
-            {
-                var semanticModel = context.Compilation.GetSemanticModel(eds.SyntaxTree);
-
-                if (semanticModel == null)
-                    continue;
-
-                if (semanticModel.GetDeclaredSymbol(eds) is not INamedTypeSymbol symbol)
-                    return;
-
-                if (symbol.ContainingType != null)
-                    continue;
-
-                var membersSymbols = new ISymbol[eds.Members.Count];
-
-                for (int j = 0; j < eds.Members.Count; j++)
-                    membersSymbols[j] = semanticModel.GetDeclaredSymbol(eds.Members[j])!;
-
-                var sb = new StringBuilder();
-
-                GenerateEnumMethods(context, eds, symbol, membersSymbols, sb);
-
-                string classCode = GetClassTemplate(eds, symbol, out string? className)
-                    .Replace("{CLASS_BODY}", sb.ToString());
-
-                context.AddSource($"{className}.g.cs", classCode.Trim());
-            }
-            catch
-            {
-            }
-        }
-    }
-
-    /// <inheritdoc/>
-    public void Initialize(GeneratorInitializationContext context)
-    {
-        context.RegisterForSyntaxNotifications(() => new ServiceNotifications());
     }
 }
 
