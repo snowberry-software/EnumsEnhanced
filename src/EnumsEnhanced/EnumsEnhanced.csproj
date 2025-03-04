@@ -6,10 +6,10 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <AssemblyVersion>1.0.0.7</AssemblyVersion>
+        <AssemblyVersion>2.0.0.0</AssemblyVersion>
         <Platforms>AnyCPU</Platforms>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-        
+
         <Authors>Snowberry Software</Authors>
         <Description>Source generator for generating common (extension) methods for enums without having the cost of the Reflection API.</Description>
 
@@ -17,10 +17,10 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>source generator, enums, fast, reflection</PackageTags>
 
-        <VersionPrefix>1.1.0</VersionPrefix>
+        <VersionPrefix>$(AssemblyVersion)</VersionPrefix>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Copyright>Copyright © 2024 Snowberry Software</Copyright>
+        <Copyright>Copyright © 2025 Snowberry Software</Copyright>
         <PackageProjectUrl>https://github.com/snowberry-software/EnumsEnhanced</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryType>git</RepositoryType>
@@ -44,7 +44,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
     </ItemGroup>
 
     <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
