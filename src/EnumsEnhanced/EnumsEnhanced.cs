@@ -58,7 +58,7 @@ internal class EnumsEnhanced : IIncrementalGenerator
     {
         var methodImplAttributeText = new StringBuilder();
         methodImplAttributeText.AppendLine("#if NETCOREAPP3_0_OR_GREATER");
-        methodImplAttributeText.AppendLine($"[{nameof(MethodImplAttribute)}({nameof(MethodImplOptions)}.{nameof(MethodImplOptions.AggressiveInlining)} | {nameof(MethodImplOptions)}.AggressiveOptimization)]");
+        //methodImplAttributeText.AppendLine($"[{nameof(MethodImplAttribute)}({nameof(MethodImplOptions)}.{nameof(MethodImplOptions.AggressiveInlining)} | {nameof(MethodImplOptions)}.AggressiveOptimization)]");
         methodImplAttributeText.AppendLine("#else");
         methodImplAttributeText.AppendLine($"[{nameof(MethodImplAttribute)}({nameof(MethodImplOptions)}.{nameof(MethodImplOptions.AggressiveInlining)})]");
         methodImplAttributeText.AppendLine("#endif");
@@ -79,6 +79,10 @@ internal class EnumsEnhanced : IIncrementalGenerator
 
         var enumUnderlyingTypeSpecial = enumUnderlyingType.SpecialType;
 
+        bool isByteCheck = enumUnderlyingTypeSpecial is
+            SpecialType.System_Byte or SpecialType.System_SByte or
+            SpecialType.System_Boolean or SpecialType.System_Char;
+
         // HasFlagFast
         {
             methodSb.AppendLine($$"""
@@ -92,56 +96,14 @@ internal class EnumsEnhanced : IIncrementalGenerator
                 {{methodImplAttributeText}}
                 public static bool {{hasFlagMethodName}}(this {{enumSymbol.Name}} e, {{enumSymbol.Name}} flag)
                 {
-                    return (e & flag) == flag;
-                }
-
-                /// <inheritdoc cref="{{hasFlagMethodName}}({{enumSymbol.Name}}, {{enumSymbol.Name}})"/>
-                {{methodImplAttributeText}}
-                public static unsafe bool {{hasFlagMethodName}}Unsafe(this {{enumSymbol.Name}} e, {{enumSymbol.Name}} flag)
-                {
-                    return {{hasFlagMethodName}}Unsafe(&e, &flag);
-                }
-
-                /// <summary>
-                /// Determines whether one or more bit fields are set in the current instance using unsafe pointer type casting.
-                /// </summary>
-                /// <param name="e">The value of the enum.</param>
-                /// <param name="flag">The flag to check.</param>
-                /// <returns><see langword="true"/> if the bit field or bit fields that are set in flag are also set in the current instance; otherwise, false.</returns>
-                {{methodImplAttributeText}}
-                public static unsafe bool {{hasFlagMethodName}}Unsafe({{enumSymbol.Name}}* e, {{enumSymbol.Name}}* flag)
-                {
-                    return {{GetUnsafeHasFlagReturnStatement()}};
+            #if NETCOREAPP3_0_OR_GREATER
+                    {{enumUnderlyingType.Name}} flagsValue = Unsafe.As<{{enumSymbol.Name}}, {{enumUnderlyingType.Name}}>(ref flag);
+                    return (Unsafe.As<{{enumSymbol.Name}}, {{enumUnderlyingType.Name}}>(ref e) & flagsValue) == flagsValue;
+            #else
+                    return (({{enumUnderlyingType.Name}})e & ({{enumUnderlyingType.Name}})flag) == ({{enumUnderlyingType.Name}})flag;
+            #endif
                 }
             """);
-
-            string GetUnsafeHasFlagReturnStatement()
-            {
-                switch (enumUnderlyingTypeSpecial)
-                {
-                    case SpecialType.System_Byte:
-                    case SpecialType.System_SByte:
-                    case SpecialType.System_Boolean:
-                        return "(*(byte*)e & *(byte*)flag) == *(byte*)flag";
-
-                    case SpecialType.System_Int16:
-                    case SpecialType.System_UInt16:
-                    case SpecialType.System_Char:
-                        return "(*(short*)e & *(short*)flag) == *(short*)flag";
-
-                    case SpecialType.System_Int32:
-                    case SpecialType.System_UInt32:
-                    case SpecialType.System_Single:
-                        return "(*(int*)e & *(int*)flag) == *(int*)flag";
-
-                    case SpecialType.System_Int64:
-                    case SpecialType.System_UInt64:
-                    case SpecialType.System_Double:
-                        return "(*(long*)e & *(long*)flag) == *(long*)flag";
-                }
-
-                return "";
-            }
         }
 
         // GetNamesFast

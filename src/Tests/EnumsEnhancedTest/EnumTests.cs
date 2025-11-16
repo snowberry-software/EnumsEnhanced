@@ -71,7 +71,6 @@ public class EnumTests
         var e = TestEnum.Test1 | TestEnum.Test4;
         Assert.True(e.HasFlagFast(TestEnum.Test1));
         Assert.True(e.HasFlagFast(TestEnum.Test_1));
-        Assert.True(e.HasFlagFastUnsafe(TestEnum.Test4));
 
         Assert.False(e.HasFlagFast(TestEnum.Test5));
         Assert.False(e.HasFlagFast(TestEnum.Test6));
