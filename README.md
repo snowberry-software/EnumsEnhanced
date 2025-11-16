@@ -20,8 +20,6 @@ Following extension methods will be generated for each enum:
 
 # How to use it
 
-The project that makes use of this package must enable `AllowUnsafeBlocks` in order to allow compiling the `HasFlagUnsafe` extension method.
-
 Also it will only generate the extension methods if the enum has no containing type.
 
 ```cs
@@ -80,40 +78,17 @@ namespace EnumsEnhancedTest {
     /// <param name="flag">The flag to check.</param>
     /// <returns><see langword="true"/> if the bit field or bit fields that are set in flag are also set in the current instance; otherwise, false.</returns>
     #if NETCOREAPP3_0_OR_GREATER
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     #else
       [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
     #endif
 
     public static bool HasFlagFast(this TestEnum e, TestEnum flag) {
-      return (e & flag) == flag;
-    }
-
-    /// <inheritdoc cref="HasFlagFast(TestEnum, TestEnum)"/>
-    #if NETCOREAPP3_0_OR_GREATER
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    #else
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
-    #endif
-
-    public static unsafe bool HasFlagFastUnsafe(this TestEnum e, TestEnum flag) {
-      return HasFlagFastUnsafe( & e, & flag);
-    }
-
-    /// <summary>
-    /// Determines whether one or more bit fields are set in the current instance using unsafe pointer type casting.
-    /// </summary>
-    /// <param name="e">The value of the enum.</param>
-    /// <param name="flag">The flag to check.</param>
-    /// <returns><see langword="true"/> if the bit field or bit fields that are set in flag are also set in the current instance; otherwise, false.</returns>
-    #if NETCOREAPP3_0_OR_GREATER
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    #else
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
-    #endif
-
-    public static unsafe bool HasFlagFastUnsafe(TestEnum * e, TestEnum * flag) {
-      return ( * (int * ) e & * (int * ) flag) == * (int * ) flag;
+      #if NETCOREAPP3_0_OR_GREATER
+      Int32 flagsValue = Unsafe.As < TestEnum, Int32 > (ref flag);
+      return (Unsafe.As < TestEnum, Int32 > (ref e) & flagsValue) == flagsValue;
+      #else
+      return ((Int32) e & (Int32) flag) == (Int32) flag;
+      #endif
     }
 
     /// <summary>
@@ -170,7 +145,6 @@ namespace EnumsEnhancedTest {
 
     /// <inheritdoc cref="IsDefinedFast(TestEnum)"/>
     #if NETCOREAPP3_0_OR_GREATER
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     #else
       [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
     #endif
@@ -273,7 +247,6 @@ namespace EnumsEnhancedTest {
     /// <param name="e">The value of a particular enumerated constant in terms of its underlying type.</param>
     /// <returns>The string representation of the value of this instance.</returns>
     #if NETCOREAPP3_0_OR_GREATER
-      [MethodImplAttribute(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     #else
       [MethodImplAttribute(MethodImplOptions.AggressiveInlining)]
     #endif

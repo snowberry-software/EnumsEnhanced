@@ -6,7 +6,8 @@ namespace EnumsEnhancedBenchmark.Benchmarks;
 [MarkdownExporterAttribute.GitHub]
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net48)]
-[SimpleJob(RuntimeMoniker.Net60)]
+[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 public class GetNameBenchmark
 {
     [Params(TestEnum.Test1, TestEnum.Test6)]
@@ -17,6 +18,14 @@ public class GetNameBenchmark
     {
         return Enum.GetName(typeof(TestEnum), NameValue);
     }
+
+#if NETCOREAPP
+    [Benchmark]
+    public string? GetName_Generic()
+    {
+        return Enum.GetName(NameValue);
+    }
+#endif
 
     [Benchmark]
     public string? GetNameFast()

@@ -1,7 +1,8 @@
 ﻿using BenchmarkDotNet.Running;
+using EnumsEnhancedBenchmark.Benchmarks;
 
-BenchmarkRunner.Run(typeof(Program).Assembly);
-//BenchmarkRunner.Run<HasFlagBenchmark>();
+//BenchmarkRunner.Run(typeof(Program).Assembly);
+BenchmarkRunner.Run<HasFlagBenchmark>();
 //BenchmarkRunner.Run<GetNamesBenchmark>();
 //BenchmarkRunner.Run<GetNameBenchmark>();
 //BenchmarkRunner.Run<GetValuesBenchmark>();

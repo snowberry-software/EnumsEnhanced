@@ -6,7 +6,8 @@ namespace EnumsEnhancedBenchmark.Benchmarks;
 [MarkdownExporterAttribute.GitHub]
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net48)]
-[SimpleJob(RuntimeMoniker.Net60)]
+[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 public class ParseNameBenchmark
 {
     [Params(nameof(TestEnum.Test1), nameof(TestEnum.Test6))]
@@ -21,6 +22,14 @@ public class ParseNameBenchmark
         return Enum.Parse(typeof(TestEnum), NameValue);
     }
 
+#if NETCOREAPP
+    [Benchmark]
+    public object Parse_Name_Generic()
+    {
+        return Enum.Parse<TestEnum>(NameValue);
+    }
+#endif
+
     [Benchmark]
     public object ParseFast_Name()
     {
@@ -32,6 +41,14 @@ public class ParseNameBenchmark
     {
         return Enum.Parse(typeof(TestEnum), NameValueUpper, true);
     }
+
+#if NETCOREAPP
+    [Benchmark]
+    public object Parse_NameIgnoreCase_Generic()
+    {
+        return Enum.Parse<TestEnum>(NameValueUpper, true);
+    }
+#endif
 
     [Benchmark]
     public object ParseFast_NameIgnoreCase()

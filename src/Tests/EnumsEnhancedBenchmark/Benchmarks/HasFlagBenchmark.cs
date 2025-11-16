@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System.Runtime.CompilerServices;
+using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 
 namespace EnumsEnhancedBenchmark.Benchmarks;
@@ -6,21 +7,14 @@ namespace EnumsEnhancedBenchmark.Benchmarks;
 [MarkdownExporterAttribute.GitHub]
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net48)]
-[SimpleJob(RuntimeMoniker.Net60)]
+[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 public class HasFlagBenchmark
 {
-    [Params(
-        TestEnum.Test1,
-        TestEnum.Test4 | TestEnum.Test1,
-        TestEnum.Test1 | TestEnum.Test2 | TestEnum.Test4 | TestEnum.Test5 | TestEnum.Test6,
-        TestEnum.Test4 | TestEnum.Test1 | TestEnum.Test6)]
+    [Params(TestEnum.Test4 | TestEnum.Test1 | TestEnum.Test6)]
     public TestEnum TestEnumValue { get; set; }
 
-    [Params(
-        TestEnum.Test1,
-        TestEnum.Test4 | TestEnum.Test1 | TestEnum.Test6,
-        TestEnum.Test4 | TestEnum.Test1,
-        TestEnum.Test1 | TestEnum.Test2 | TestEnum.Test4 | TestEnum.Test5 | TestEnum.Test6)]
+    [Params(TestEnum.Test1 | TestEnum.Test2 | TestEnum.Test4 | TestEnum.Test5 | TestEnum.Test6)]
     public TestEnum TestEnumFlagCheck { get; set; }
 
     [Benchmark(Baseline = true)]
@@ -33,11 +27,5 @@ public class HasFlagBenchmark
     public bool HasFlagFast()
     {
         return TestEnumValue.HasFlagFast(TestEnumFlagCheck);
-    }
-
-    [Benchmark]
-    public bool HasFlagFastUnsafe()
-    {
-        return TestEnumValue.HasFlagFastUnsafe(TestEnumFlagCheck);
     }
 }
