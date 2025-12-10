@@ -44,6 +44,9 @@ internal class EnumsEnhanced : IIncrementalGenerator
 
                 var sb = new StringBuilder();
 
+                //foreach (var memberSymbol in membersSymbols)
+                //    sb.AppendLine($"// {memberSymbol.Name}");
+
                 GenerateEnumMethods(sourceProductionContext, eds, symbol, membersSymbols, sb);
 
                 string classCode = GetClassTemplate(eds, symbol, out string? className)
@@ -76,6 +79,10 @@ internal class EnumsEnhanced : IIncrementalGenerator
 
             return;
         }
+
+        bool isFlags = enumSymbol
+            .GetAttributes()
+            .Any(a => a.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
 
         var enumUnderlyingTypeSpecial = enumUnderlyingType.SpecialType;
 
@@ -218,65 +225,53 @@ internal class EnumsEnhanced : IIncrementalGenerator
         {
             const string getNameMethodName = "GetNameFast";
             const string toStringMethodName = "ToStringFast";
+
             var flagCases = new StringBuilder();
+            var flagCasesToString = new StringBuilder();
+            var switchCasesToString = new StringBuilder();
 
             const string separator = $", ";
 
-            for (int i = 0; i < memberSymbols.Count; i++)
+            var groupedByValue = memberSymbols
+                .Where(x => x.HasConstantValue)
+                .GroupBy(x => x.ConstantValue);
+
+            foreach (var group in groupedByValue)
             {
-                var member = memberSymbols[i];
-                string memberRef = $"{enumSymbol.Name}.{member.Name}";
+                object? value = group.Key;
+                var memberFirst = group.First();
+                var memberLast = isFlags ? group.Last() : group.First();
 
-                if (member.HasConstantValue)
-                {
-                    if (constantValuesChecked.Contains(member.ConstantValue))
-                    {
-                        string skipText = $"// Skipping duplicated constant value: {memberRef} -> {member.ConstantValue}";
-                        switchCases.AppendLine(skipText);
-                        switchCases.AppendLine();
-
-                        flagCases.AppendLine(skipText);
-                        flagCases.AppendLine();
-                        continue;
-                    }
-
-                    constantValuesChecked.Add(member.ConstantValue);
-                }
-
-                switchCases.AppendLine($"case {memberRef}:");
-                switchCases.AppendLine($"\treturn nameof({memberRef});");
+                // GetNameFast uses FIRST name (matches Enum.GetName behavior)
+                string memberRefFirst = $"{enumSymbol.Name}.{memberFirst.Name}";
+                switchCases.AppendLine($"case {memberRefFirst}:");
+                switchCases.AppendLine($"\treturn nameof({memberRefFirst});");
                 switchCases.AppendLine();
 
-                flagCases.AppendLine(@$"if(e.{hasFlagMethodName}({memberRef}))");
-                flagCases.AppendLine("\t" + @$"flagBuilder.{nameof(StringBuilder.Append)}({memberRef}.{getNameMethodName}(false) + ""{separator}"");");
-                flagCases.AppendLine();
+                // ToStringFast uses LAST name (matches Enum.ToString behavior)
+                string memberRefLast = $"{enumSymbol.Name}.{memberLast.Name}";
+                switchCasesToString.AppendLine($"case {memberRefLast}:");
+                switchCasesToString.AppendLine($"\treturn nameof({memberRefLast});");
+                switchCasesToString.AppendLine();
             }
 
+            var sortedByConstantValueDescGrouped = memberSymbols
+                .Where(x => x.HasConstantValue)
+                .OrderByDescending(x => x.ConstantValue)
+                .GroupBy(x => x.ConstantValue);
+
+            const string c_ToStringFastInternal = "ToStringFastInternal";
+            GenerateFlagCases(flagCases, isToString: false, enumSymbol, enumUnderlyingType, sortedByConstantValueDescGrouped, constantValuesChecked, getNameMethodName);
+            constantValuesChecked.Clear();
+            GenerateFlagCases(flagCasesToString, isToString: true, enumSymbol, enumUnderlyingType, sortedByConstantValueDescGrouped, constantValuesChecked, c_ToStringFastInternal);
+
+            const string c_CheckedMaskName = "checkedMask";
+            const string c_CheckedMaskNameCurrent = "checkedMaskCurrent";
+
+            AppendGetNameMethod(methodSb, "public", enumSymbol, enumUnderlyingType, getNameMethodName, switchCases, flagCases, isFlags);
+            AppendGetNameMethod(methodSb, "private", enumSymbol, enumUnderlyingType, c_ToStringFastInternal, switchCasesToString, flagCasesToString, isFlags);
+
             methodSb.AppendLine($$"""
-
-                /// <summary>
-                /// Resolves the name of the given enum value.
-                /// </summary>
-                /// <param name="e">The value of a particular enumerated constant in terms of its underlying type.</param>
-                /// <param name="includeFlagNames">Determines whether the value has flags, so it will return `EnumValue, EnumValue2`.</param>
-                /// <returns> A string containing the name of the enumerated constant or <see langword="null"/> if the enum has multiple flags set but <paramref name="includeFlagNames"/> is not enabled.</returns>
-                public static string? {{getNameMethodName}}(this {{enumSymbol.Name}} e, bool includeFlagNames = false)
-                {
-                    switch(e)
-                    {
-                        {{switchCases}}
-                    }
-
-                    // Returning null is the default behavior.
-                    if(!includeFlagNames)
-                        return null;
-                        //throw new Exception("Enum name could not be found!");
-
-                    var flagBuilder = new StringBuilder();
-                    {{flagCases}}
-
-                    return flagBuilder.ToString().Trim(new char[] { ',', ' ' });
-                }
 
                 /// <summary>
                 /// Converts the value of this instance to its equivalent string representation.
@@ -286,9 +281,97 @@ internal class EnumsEnhanced : IIncrementalGenerator
                 {{methodImplAttributeText}}
                 public static string? {{toStringMethodName}}(this {{enumSymbol.Name}} e)
                 {
-                    return {{getNameMethodName}}(e, true);
+                    return {{c_ToStringFastInternal}}(e, true);
                 }
             """);
+
+            static void AppendGetNameMethod(
+                StringBuilder sb,
+                string accessModifier,
+                ISymbol enumSymbol,
+                ISymbol enumUnderlyingType,
+                string methodName,
+                StringBuilder switchCases,
+                StringBuilder flagCases,
+                bool writeFlags)
+            {
+                sb.AppendLine($$"""
+                    /// <summary>
+                    /// Resolves the name of the given enum value.
+                    /// </summary>
+                    /// <param name="e">The value of a particular enumerated constant in terms of its underlying type.</param>
+                    /// <param name="includeFlagNames">Determines whether the value has flags, so it will return `EnumValue, EnumValue2`.</param>
+                    /// <returns> A string containing the name of the enumerated constant or <see langword="null"/> if the enum has multiple flags set but <paramref name="includeFlagNames"/> is not enabled.</returns>
+                    {{accessModifier}} static string? {{methodName}}(this {{enumSymbol.Name}} e, bool includeFlagNames = false)
+                    {
+                        switch(e)
+                        {
+                            {{switchCases}}
+                        }
+                
+                        {{(writeFlags ? "" : $"return (({enumUnderlyingType.Name})e).ToString();")}}
+
+                        // Returning null is the default behavior.
+                        if(!includeFlagNames)
+                            return null;
+                            //throw new Exception("Enum name could not be found!");
+                
+                        {{(!writeFlags ? "/*" : "")}}
+
+                        var flagBuilder = new StringBuilder();
+                        {{flagCases}}
+                        if({{c_CheckedMaskNameCurrent}} != default)
+                            return (({{enumUnderlyingType.Name}})e).ToString();
+
+                        return flagBuilder.ToString().Trim(new char[] { ',', ' ' });
+
+                        {{(!writeFlags ? "*/" : "")}}
+                    }
+                    """);
+            }
+
+            static void GenerateFlagCases(StringBuilder flagCasesBuilder,
+                bool isToString,
+                ISymbol enumSymbol,
+                ISymbol enumUnderlyingType,
+                IEnumerable<IGrouping<object?, IFieldSymbol>> fields,
+                List<object> constantValuesChecked,
+                string toStringMethodName)
+            {
+                bool foundZero = false;
+                flagCasesBuilder.AppendLine($"{enumUnderlyingType.Name} {c_CheckedMaskNameCurrent} = ({enumUnderlyingType.Name})e;");
+                foreach (var group in fields)
+                {
+                    var member = group.Last();
+
+                    string memberRef = $"{enumSymbol.Name}.{member.Name}";
+
+                    if (member.HasConstantValue)
+                    {
+                        if (!foundZero && member.ConstantValue.ToString() == "0")
+                        {
+                            foundZero = true;
+                            continue;
+                        }
+
+                        if (constantValuesChecked.Contains(member.ConstantValue))
+                        {
+                            string skipText = $"// Skipping duplicated constant value: {memberRef} -> {member.ConstantValue}";
+
+                            flagCasesBuilder.AppendLine(skipText);
+                            flagCasesBuilder.AppendLine();
+                            continue;
+                        }
+
+                        constantValuesChecked.Add(member.ConstantValue);
+                    }
+
+                    flagCasesBuilder.AppendLine(@$"if(({c_CheckedMaskNameCurrent} & {member.ConstantValue}) == {member.ConstantValue}) {{");
+                    flagCasesBuilder.AppendLine("\t" + @$"flagBuilder.{nameof(StringBuilder.Insert)}(0, ""{separator}"" + {memberRef}.{toStringMethodName}(false));");
+                    flagCasesBuilder.AppendLine("\t" + @$"{c_CheckedMaskNameCurrent} -= {member.ConstantValue}; }}");
+                    flagCasesBuilder.AppendLine();
+                }
+            }
         }
 
         // ParseFast
@@ -298,40 +381,30 @@ internal class EnumsEnhanced : IIncrementalGenerator
             switchCases.Clear();
 
             var ifCases = new StringBuilder();
-            var valueSwitchCases = new StringBuilder();
+
             constantValuesChecked.Clear();
 
             foreach (var member in memberSymbols.OrderBy(x => x.Name.Length).Cast<IFieldSymbol>())
             {
-                string memberRef = $"{enumSymbol.Name}.{member.Name}";
-
-                switchCases.AppendLine($"case nameof({memberRef}):");
-                switchCases.AppendLine($"\tparsed = true;");
-                switchCases.AppendLine($"\tlocalResult |= ({enumUnderlyingType.Name}){memberRef};");
-                switchCases.AppendLine($"\tbreak;");
-                switchCases.AppendLine();
-
-                ifCases.AppendLine($"if(subValue.Equals(\"{member.Name}\", {nameof(StringComparison)}.{nameof(StringComparison.OrdinalIgnoreCase)})) {{");
-                ifCases.AppendLine($"\tparsed = true;");
-                ifCases.AppendLine($"\tlocalResult |= ({enumUnderlyingType.Name}){memberRef}; }}");
-
                 if (!member.HasConstantValue)
                     continue;
 
-                if (constantValuesChecked.Contains(member.ConstantValue))
-                {
-                    string skipText = $"// Skipping duplicated constant value: {memberRef} -> {member.ConstantValue}";
-                    valueSwitchCases.AppendLine(skipText);
-                    valueSwitchCases.AppendLine();
+                if (member.ConstantValue == null)
                     continue;
-                }
 
-                valueSwitchCases.AppendLine($"case ({enumUnderlyingType.Name}){memberRef}:");
-                valueSwitchCases.AppendLine($"\tsuccessful = true;");
-                valueSwitchCases.AppendLine($"\treturn {memberRef};");
-                valueSwitchCases.AppendLine();
+                string memberRef = $"{enumSymbol.Name}.{member.Name}";
 
-                constantValuesChecked.Add(member.ConstantValue);
+                string constantValueString = member.ConstantValue is IConvertible convertible ? convertible.ToString(CultureInfo.InvariantCulture) : member.ConstantValue.ToString();
+
+                switchCases.AppendLine($"case nameof({memberRef}):");
+                switchCases.AppendLine($"\tparsed = true;");
+                switchCases.AppendLine($"\tlocalResult |= {constantValueString};");
+                switchCases.AppendLine($"\tbreak;");
+                switchCases.AppendLine();
+
+                ifCases.AppendLine($"if(subValue.Equals(nameof({memberRef}), {nameof(StringComparison)}.{nameof(StringComparison.OrdinalIgnoreCase)})) {{");
+                ifCases.AppendLine($"\tparsed = true;");
+                ifCases.AppendLine($"\tlocalResult |= {constantValueString}; }}");
             }
 
             methodSb.AppendLine($$"""
@@ -372,9 +445,12 @@ internal class EnumsEnhanced : IIncrementalGenerator
                 {
                     successful = false;
 
-                    if (throwOnFailure && (string.{{nameof(string.IsNullOrEmpty)}}(value) || string.{{nameof(string.IsNullOrWhiteSpace)}}(value)))
+                    if (string.{{nameof(string.IsNullOrWhiteSpace)}}(value))
                     {
-                        throw new {{nameof(ArgumentException)}}("Value can't be null or whitespace!", nameof(value));
+                        if (throwOnFailure)
+                            throw new {{nameof(ArgumentException)}}("Value can't be null or whitespace!", nameof(value));
+                        
+                        return default;
                     }
 
                     {{enumUnderlyingType.Name}} localResult = 0;
@@ -383,13 +459,16 @@ internal class EnumsEnhanced : IIncrementalGenerator
                     string originalValue = value;
                     char firstChar = value[0];
 
+                    if (char.{{nameof(char.IsWhiteSpace)}}(firstChar))
+                        firstChar = value.TrimStart()[0];
+
                     if (char.{{nameof(char.IsDigit)}}(firstChar) || firstChar == '-' || firstChar == '+')
                     {
-                        if({{enumUnderlyingType.Name}}.TryParse(value, NumberStyles.AllowLeadingSign | NumberStyles.AllowTrailingWhite, null, out var valueNumber))
-                            switch(valueNumber)
-                            {
-                                {{valueSwitchCases}}
-                            }
+                        if({{enumUnderlyingType.Name}}.TryParse(value, NumberStyles.AllowLeadingSign | NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, null, out var valueNumber))
+                        {
+                            parsed = true;
+                            localResult = valueNumber;
+                        }
                     }
                     else
                     while(value != null && value.Length > 0)
