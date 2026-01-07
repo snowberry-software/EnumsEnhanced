@@ -1,6 +1,6 @@
 v.2.1.0
 - Updated to .NET 10.
-- Optimized generated code for better performance.
+- Optimized generated code for better performance and closer match to built-in Enum methods.
 
 v.1.1.0
 - Updated to incremental source generator.
