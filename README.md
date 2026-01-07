@@ -37,14 +37,12 @@ The generated class will always have the same naming scheme by using your enum t
 or in this example **TestEnumEnhanced**.
 
 ```cs
-namespace EnumsEnhancedTest;
+namespace TestEnumEnhancedTest;
 
 [Flags]
-internal enum TestEnum
+public enum TestEnum : short
 {
     Test1 = 1 << 0,
-    Test_1 = 1 << 0,
-
     Test2 = 1 << 1,
     Test4 = 1 << 2,
     Test5 = 1 << 4,
