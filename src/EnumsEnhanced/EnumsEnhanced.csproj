@@ -1,60 +1,60 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <LangVersion>latest</LangVersion>
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <AssemblyVersion>2.1.0.0</AssemblyVersion>
-        <Platforms>AnyCPU</Platforms>
-        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<AssemblyVersion>2.1.0.0</AssemblyVersion>
+		<Platforms>AnyCPU</Platforms>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 
-        <Authors>Snowberry Software</Authors>
-        <Description>Source generator for generating common (extension) methods for enums without having the cost of the Reflection API.</Description>
+		<Authors>Snowberry Software</Authors>
+		<Description>Source generator for generating common (extension) methods for enums without having the cost of the Reflection API.</Description>
 
-        <IsPackable>true</IsPackable>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageTags>source generator, enums, fast, reflection</PackageTags>
+		<IsPackable>true</IsPackable>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>source generator, enums, fast, reflection</PackageTags>
 
-        <VersionPrefix>$(AssemblyVersion)</VersionPrefix>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Copyright>Copyright © 2025 Snowberry Software</Copyright>
-        <PackageProjectUrl>https://github.com/snowberry-software/EnumsEnhanced</PackageProjectUrl>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/snowberry-software/EnumsEnhanced.git</RepositoryUrl>
-        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<VersionPrefix>$(AssemblyVersion)</VersionPrefix>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<Copyright>Copyright © 2025 Snowberry Software</Copyright>
+		<PackageProjectUrl>https://github.com/snowberry-software/EnumsEnhanced</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/snowberry-software/EnumsEnhanced.git</RepositoryUrl>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 
-        <PackageReleaseNotes>(Please write the package release notes in "CHANGELOG.txt".)</PackageReleaseNotes>
-    </PropertyGroup>
+		<PackageReleaseNotes>(Please write the package release notes in "CHANGELOG.txt".)</PackageReleaseNotes>
+	</PropertyGroup>
 
-    <ItemGroup>
-        <!-- Package the generator in the analyzer directory of the nuget package -->
-        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        <None Include="..\..\README.md">
-            <Pack>True</Pack>
-            <PackagePath>\</PackagePath>
-        </None>
-    </ItemGroup>
+	<ItemGroup>
+		<!-- Package the generator in the analyzer directory of the nuget package -->
+		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="..\..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+	</ItemGroup>
 
-    <Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
-        <ReadLinesFromFile File="..\..\CHANGELOG.txt">
-            <Output TaskParameter="Lines" ItemName="ReleaseNoteLines" />
-        </ReadLinesFromFile>
+	<Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">
+		<ReadLinesFromFile File="..\..\CHANGELOG.txt">
+			<Output TaskParameter="Lines" ItemName="ReleaseNoteLines" />
+		</ReadLinesFromFile>
 
-        <PropertyGroup>
-            <PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
-        </PropertyGroup>
-    </Target>
+		<PropertyGroup>
+			<PackageReleaseNotes>@(ReleaseNoteLines, '%0a')</PackageReleaseNotes>
+		</PropertyGroup>
+	</Target>
 
 </Project>
